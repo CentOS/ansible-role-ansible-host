@@ -49,12 +49,16 @@
     path: "{{ item[0].base_path }}/{{ item[1] }}"
   with_nested:
     - "{{ ansible_configs }}"
-    - [ 'handlers', 'files', 'vars', 'tasks' ]
+    - [ 'handlers', 'files', 'vars', 'tasks', 'templates' ]
     
-
 - name: Configuring ansible.cfg 
   template:
     src: ansible.cfg.j2
     dest: "{{ item.base_path }}/ansible.cfg"
   with_items: "{{ ansible_configs }}"   
   
+- name: Fetching all needed roles
+  command: "ansible-galaxy install -r playbooks/requirements-{{ item.env }}.yml"
+  args:
+    chdir: "{{ item.base_path }}"
+  with_items: "{{ ansible_configs }}"  
