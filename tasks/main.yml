@@ -1,0 +1,60 @@
+---
+- name: Installing required repositories 
+  yum:
+    state: installed
+    name: "{{ ansible_repo_pkg }}"
+
+- name: Ensuring some pkgs are installed 
+  yum:
+    state: latest
+    name: "{{ item }}"
+  with_items:
+    - ansible
+    - git
+    - git-crypt
+
+- name: Creating the ansible inventory owner
+  user:
+    comment: "Automation bot for Ansible - {{ item.name }} workspace "
+    name: "{{ item.owner }}"
+    state: present
+  with_items: "{{ ansible_configs }}"
+
+- name: Ensuring we have correct place for all ansible files
+  file:
+    path: "{{ item.base_path }}"
+    state: directory
+    mode: 0750
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+  with_items: "{{ ansible_configs }}"
+
+- name: Ensuring mitogen is available
+  git:
+    repo: "{{ mitogen_scm_url }}"
+    dest: "{{ item.base_path }}/mitogen"
+    version: "{{ mitogen_tag }}"
+  with_items: "{{ ansible_configs }}"
+
+- name: Checking out playbooks and requirements.yml
+  git:
+    dest: "{{ item.base_path}}/playbooks"
+    repo: "{{ item.scm_repo_playbooks }}"
+  with_items: "{{ ansible_configs }}"
+
+- name: Mandatory symlinks 
+  file:
+    state: link
+    src: "{{ item[0].base_path }}/playbooks/{{ item[1] }}"
+    path: "{{ item[0].base_path }}/{{ item[1] }}"
+  with_nested:
+    - "{{ ansible_configs }}"
+    - [ 'handlers', 'files', 'vars', 'tasks' ]
+    
+
+- name: Configuring ansible.cfg 
+  template:
+    src: ansible.cfg.j2
+    dest: "{{ item.base_path }}/ansible.cfg"
+  with_items: "{{ ansible_configs }}"   
+  

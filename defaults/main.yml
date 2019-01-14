@@ -1,0 +1,20 @@
+# Default variables for ansible-host role
+# As the ansible mgmt host can also use various inventories, etc
+# We'll define multiple paths where to checkout and which keys to use
+
+# Ansible version for CentOS we want on the mgmt station
+ansible_repo_pkg: centos-release-ansible26
+
+# By default we'll check out mitogen plugin, but we can enable it per ansible config
+mitogen_scm_url: https://github.com/dw/mitogen.git
+mitogen_tag: v0.2.3
+
+# Real ansible host configurations (multiple are possible)
+ansible_configs:
+  - name: centos
+    base_path: /var/lib/ansible-centos
+    scm_repo_playbooks: https://github.com/CentOS/ansible-infra-playbooks.git
+    use_mitogen: True
+    forks: 50
+    owner: ansibot
+    env: staging

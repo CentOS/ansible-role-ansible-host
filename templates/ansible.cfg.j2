@@ -1,0 +1,21 @@
+[defaults]
+inventory	= {{ item.base_path }}/inventory
+roles_path 	= {{ item.base_path }}/roles   
+forks		= {{ item.forks }}
+transport	= ssh
+retry_files_enabled = False
+{% if item.use_mitogen %}
+strategy_plugins = {{ item.base_path }}/mitogen/ansible_mitogen/plugins/strategy
+strategy = mitogen_linear
+{% else %}
+strategy = linear
+{% endif %}
+[inventory]
+[privilege_escalation]
+[paramiko_connection]
+[ssh_connection]
+[persistent_connection]
+[accelerate]
+[selinux]
+[colors]
+[diff]
