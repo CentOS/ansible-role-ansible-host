@@ -18,7 +18,35 @@
     comment: "Automation bot for Ansible - {{ item.name }} workspace "
     name: "{{ item.owner }}"
     state: present
+    home: "{{ item.homedir }}"
   with_items: "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.owner }}"
+
+- name: Ensuring we have a local creds store for git-crypt keys
+  file:
+    path: "{{ item.homedir }}/.credentials"
+    state: directory
+    owner: "{{ item.owner }}"
+    mode: 0700
+  with_items: "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags:
+    - creds
+
+- name: Distributing the needed git-crypt keys to unlock repositories
+  copy:
+    src: "{{ pkistore }}/git/{{ item.1.git_crypt_key }}"
+    dest: "{{ item.0.homedir }}/.credentials/{{ item.1.git_crypt_key }}"
+  with_subelements: 
+    - "{{ ansible_configs }}"
+    - scm_repos
+  when: item.1.git_crypted 
+  loop_control:
+    label: "{{ item.1.name }}"
+  tags:
+    - creds
 
 - name: Ensuring we have correct place for all ansible files
   file:
@@ -28,19 +56,45 @@
     owner: "{{ item.owner }}"
     group: "{{ item.owner }}"
   with_items: "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.base_path }}"
 
 - name: Ensuring mitogen is available
   git:
     repo: "{{ mitogen_scm_url }}"
     dest: "{{ item.base_path }}/mitogen"
     version: "{{ mitogen_tag }}"
+  become: True
+  become_user: "{{ item.owner }}"
   with_items: "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.name }}"
 
-- name: Checking out playbooks and requirements.yml
+- name: Checking out all needed SCM repositories
   git:
-    dest: "{{ item.base_path}}/playbooks"
-    repo: "{{ item.scm_repo_playbooks }}"
-  with_items: "{{ ansible_configs }}"
+    dest: "{{ item.0.base_path }}/{{ item.1.name }}"
+    repo: "{{ item.1.url }}"
+    accept_hostkey: yes
+  become: True
+  become_user: "{{ item.0.owner }}"
+  with_subelements:
+    - "{{ ansible_configs }}"
+    - scm_repos
+  loop_control:
+    label: "{{ item.1.name }}"
+
+- name: Unlocking git-crypted SCM repositories if needed
+  command: "git-crypt unlock {{ item.0.homedir }}/.credentials/{{ item.1.git_crypt_key }}"
+  args:
+    chdir: "{{ item.0.base_path }}/{{ item.1.name }}"
+  become: True
+  become_user: "{{ item.0.owner }}"
+  with_subelements:
+    - "{{ ansible_configs }}"
+    - scm_repos
+  when: item.1.git_crypted   
+  loop_control:
+    label: "{{ item.1.name }}"
 
 - name: Mandatory symlinks 
   file:
@@ -50,15 +104,22 @@
   with_nested:
     - "{{ ansible_configs }}"
     - [ 'handlers', 'files', 'vars', 'tasks', 'templates' ]
-    
+  loop_control:
+    label: "{{ item[1] }}"
+
 - name: Configuring ansible.cfg 
   template:
     src: ansible.cfg.j2
     dest: "{{ item.base_path }}/ansible.cfg"
   with_items: "{{ ansible_configs }}"   
-  
+  loop_control:
+     label: "{{ item.name }}"         
 - name: Fetching all needed roles
   command: "ansible-galaxy install -r playbooks/requirements-{{ item.env }}.yml"
   args:
     chdir: "{{ item.base_path }}"
-  with_items: "{{ ansible_configs }}"  
+  become: True
+  become_user: "{{ item.owner }}"
+  with_items: "{{ ansible_configs }}" 
+  loop_control:
+     label: "{{ item.name }}"       
