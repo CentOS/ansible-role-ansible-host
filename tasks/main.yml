@@ -25,7 +25,7 @@
 
 - name: Ensuring we have a local creds store for git-crypt keys
   file:
-    path: "{{ item.homedir }}/.credentials"
+    path: "{{ item.credstore }}"
     state: directory
     owner: "{{ item.owner }}"
     mode: 0700
@@ -38,7 +38,7 @@
 - name: Distributing the needed git-crypt keys to unlock repositories
   copy:
     src: "{{ pkistore }}/git/{{ item.1.git_crypt_key }}"
-    dest: "{{ item.0.homedir }}/.credentials/{{ item.1.git_crypt_key }}"
+    dest: "{{ item.0.credstore }}/{{ item.1.git_crypt_key }}"
   with_subelements: 
     - "{{ ansible_configs }}"
     - scm_repos
@@ -84,7 +84,7 @@
     label: "{{ item.1.name }}"
 
 - name: Unlocking git-crypted SCM repositories if needed
-  command: "git-crypt unlock {{ item.0.homedir }}/.credentials/{{ item.1.git_crypt_key }}"
+  command: "git-crypt unlock {{ item.0.credstore }}/{{ item.1.git_crypt_key }}"
   args:
     chdir: "{{ item.0.base_path }}/{{ item.1.name }}"
   become: True
@@ -114,6 +114,7 @@
   with_items: "{{ ansible_configs }}"   
   loop_control:
      label: "{{ item.name }}"         
+
 - name: Fetching all needed roles
   command: "ansible-galaxy install -r playbooks/requirements-{{ item.env }}.yml"
   args:
@@ -122,4 +123,15 @@
   become_user: "{{ item.owner }}"
   with_items: "{{ ansible_configs }}" 
   loop_control:
-     label: "{{ item.name }}"       
+    label: "{{ item.name }}"       
+
+- name: Mandatory symlink for roles
+  file:
+    state: link
+    src: "{{ item.base_path }}/roles"
+    path: "{{ item.base_path }}/playbooks/roles"
+  with_items:
+    - "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item }}"
+

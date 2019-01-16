@@ -11,8 +11,15 @@ mitogen_tag: v0.2.3
 
 # Real ansible host configurations (multiple are possible)
 ansible_configs:
-  - name: centos
-    base_path: /var/lib/ansible-centos
+  - name: my_inventory
+    base_path: /srv/ansible/my_inventory
+    use_mitogen: True
+    forks: 50
+    owner: automationbot
+    homedir: /home/automationbot
+    credstore: /home/automationbot/credstore
+    env: staging    
+    ssh_host_key_check: True # False if we want blindly to accept ssh connections to such inventory
     scm_repos:
       - name: playbooks
         url: https://github.com/CentOS/ansible-infra-playbooks.git
@@ -26,11 +33,7 @@ ansible_configs:
         git_crypted: True
         git_crypt_key: other.key
       - name: filestore
-        url: user@url:path/to/filestore.git
+        url: https://apikey@url/path/to/filestore.git
         git_crypted: True
         git_crypt_key: filestore.key
-    use_mitogen: True
-    forks: 50
-    owner: ansibot
-    homedir: /home/ansibot
-    env: staging
+
