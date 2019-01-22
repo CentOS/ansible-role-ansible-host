@@ -12,6 +12,7 @@
     - ansible
     - git
     - git-crypt
+    - GitPython
 
 - name: Creating the ansible inventory owner
   user:
@@ -135,8 +136,34 @@
   loop_control:
      label: "{{ item.name }}"         
 
+- name: Ensuring we have local ansible-roles-ctl tool
+  copy:
+    src: ansible-roles-ctl
+    dest: /usr/bin/ansible-roles-ctl
+    mode: 0755
+
+- name: Correct symlink for requirements.yml in basedir
+  file:
+    state: link
+    src: "{{ item.base_path }}/playbooks/requirements-{{ item.env }}.yml"
+    dest: "{{ item.base_path }}/requirements.yml"
+  with_items:
+    - "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.name }}"
+
 - name: Fetching all needed roles
-  command: "ansible-galaxy install -r playbooks/requirements-{{ item.env }}.yml"
+  command: "ansible-roles-ctl install"
+  args:
+    chdir: "{{ item.base_path }}"
+  become: True
+  become_user: "{{ item.owner }}"
+  with_items: "{{ ansible_configs }}" 
+  loop_control:
+    label: "{{ item.name }}"       
+
+- name: Upadating all roles based on requirements.yml
+  command: "ansible-roles-ctl install"
   args:
     chdir: "{{ item.base_path }}"
   become: True
