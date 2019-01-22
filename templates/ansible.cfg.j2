@@ -13,12 +13,23 @@ strategy = mitogen_linear
 {% else %}
 strategy = linear
 {% endif %}
+{% if item.log_to_disk %}
+log_path = /var/log/ansible/{{ item.name }}/ansible.log
+{% endif %}
 [inventory]
+
 [privilege_escalation]
+
 [paramiko_connection]
+
 [ssh_connection]
+
 [persistent_connection]
+
 [accelerate]
+
 [selinux]
+
 [colors]
+
 [diff]

@@ -19,6 +19,7 @@ ansible_configs:
     homedir: /home/automationbot
     credstore: /home/automationbot/credstore
     env: staging    
+    log_to_disk: True # will log to /var/log/ansible/my_inventory
     ssh_host_key_check: True # False if we want blindly to accept ssh connections to such inventory
     scm_repos:
       - name: playbooks

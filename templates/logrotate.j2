@@ -1,0 +1,7 @@
+/var/log/ansible/{{ item.name }}/ansible.log {
+  weekly
+  rotate 2
+  create 0644 {{ item.owner }}
+  missingok
+  compress
+}

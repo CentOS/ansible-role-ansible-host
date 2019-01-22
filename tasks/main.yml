@@ -23,6 +23,26 @@
   loop_control:
     label: "{{ item.owner }}"
 
+- name: Ensuring ansible can log to a specific directory per inventory
+  file:
+    path: "/var/log/ansible/{{ item.name }}"
+    state: directory
+    owner: "{{ item.owner }}"
+  with_items: "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.owner }}"
+  when: item.log_to_disk
+
+- name: Configuring logrotate if needed
+  template:
+    src: logrotate.j2
+    dest: "/etc/logrotate.d/ansible-{{ item.name }}"
+  with_items: "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.owner }}"
+  when: item.log_to_disk
+
+   
 - name: Ensuring we have a local creds store for git-crypt keys
   file:
     path: "{{ item.credstore }}"
@@ -133,5 +153,5 @@
   with_items:
     - "{{ ansible_configs }}"
   loop_control:
-    label: "{{ item }}"
+    label: "{{ item.name }}"
 
