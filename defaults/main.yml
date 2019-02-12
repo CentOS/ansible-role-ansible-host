@@ -7,7 +7,7 @@ ansible_repo_pkg: centos-release-ansible26
 
 # By default we'll check out mitogen plugin, but we can enable it per ansible config
 mitogen_scm_url: https://github.com/dw/mitogen.git
-mitogen_tag: v0.2.3
+mitogen_tag: v0.2.4
 
 # Real ansible host configurations (multiple are possible)
 ansible_configs:
