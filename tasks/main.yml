@@ -13,6 +13,7 @@
     - git
     - git-crypt
     - GitPython
+    - patch
 
 - name: Creating the ansible inventory owner
   user:
@@ -85,11 +86,14 @@
     repo: "{{ mitogen_scm_url }}"
     dest: "{{ item.base_path }}/mitogen-{{ mitogen_tag }}"
     version: "{{ mitogen_tag }}"
+    force: yes
   become: True
   become_user: "{{ item.owner }}"
   with_items: "{{ ansible_configs }}"
   loop_control:
     label: "{{ item.name }}"
+  tags:
+    - mitogen
 
 - name: Symlinking mitogen to correct version/tag
   file:
@@ -100,6 +104,23 @@
   with_items: "{{ ansible_configs }}"
   loop_control:
     label: "{{ item.name }}"
+  tags:
+    - mitogen
+
+- name: Patching mitogen if needed
+  patch:
+    src: "mitogen-patches/{{ item.1 }}"
+    basedir: "{{ item.0.base_path }}/mitogen"
+    strip: 1
+  with_nested:
+    - "{{ ansible_configs }}"
+    - "{{ mitogen_patch_list }}"
+  tags:
+    - mitogen
+  when: mitogen_needs_patches
+  loop_control:
+    label: "{{ item.1 }}"
+
 
 - name: Checking out all needed SCM repositories
   git:

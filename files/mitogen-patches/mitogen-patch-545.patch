@@ -1,0 +1,13 @@
+diff --git a/mitogen/core.py b/mitogen/core.py
+index dcca2e91..25732896 100644
+--- a/mitogen/core.py
++++ b/mitogen/core.py
+@@ -2140,7 +2140,7 @@ def _get_socketpair(self):
+             return rsock, wsock
+ 
+     COOKIE_MAGIC, = struct.unpack('L', b('LTCH') * (struct.calcsize('L')//4))
+-    COOKIE_FMT = 'Llll'
++    COOKIE_FMT = '>Qqqq'  # #545: id() and get_ident() may exceed long on armhfp.
+     COOKIE_SIZE = struct.calcsize(COOKIE_FMT)
+ 
+     def _make_cookie(self):
