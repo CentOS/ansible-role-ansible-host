@@ -83,9 +83,19 @@
 - name: Ensuring mitogen is available
   git:
     repo: "{{ mitogen_scm_url }}"
-    dest: "{{ item.base_path }}/mitogen"
+    dest: "{{ item.base_path }}/mitogen-{{ mitogen_tag }}"
     version: "{{ mitogen_tag }}"
   become: True
+  become_user: "{{ item.owner }}"
+  with_items: "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Symlinking mitogen to correct version/tag
+  file:
+    state: link
+    src: "{{ item.base_path }}/mitogen-{{ mitogen_tag }}"
+    path: "{{ item.base_path }}/mitogen"
   become_user: "{{ item.owner }}"
   with_items: "{{ ansible_configs }}"
   loop_control:
@@ -163,7 +173,7 @@
     label: "{{ item.name }}"       
 
 - name: Upadating all roles based on requirements.yml
-  command: "ansible-roles-ctl install"
+  command: "ansible-roles-ctl update"
   args:
     chdir: "{{ item.base_path }}"
   become: True
