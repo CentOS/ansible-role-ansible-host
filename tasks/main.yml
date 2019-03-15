@@ -167,6 +167,15 @@
   loop_control:
      label: "{{ item.name }}"         
 
+- name: Creating facts caching directory for ansible
+  file:
+    state: directory
+    owner: "{{ item.owner }}"
+    path: "{{ item.base_path}}/.ansible_cache"
+  with_items: "{{ ansible_configs }}" 
+  tags:
+    - cache
+
 - name: Ensuring we have local ansible-roles-ctl tool
   copy:
     src: ansible-roles-ctl
