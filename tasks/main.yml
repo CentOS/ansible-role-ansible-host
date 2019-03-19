@@ -173,8 +173,8 @@
     owner: "{{ item.owner }}"
     path: "{{ item.base_path}}/.ansible_cache"
   with_items: "{{ ansible_configs }}" 
-  tags:
-    - cache
+  loop_control:
+     label: "{{ item.name }}"         
 
 - name: Ensuring we have local ansible-roles-ctl tool
   copy:
