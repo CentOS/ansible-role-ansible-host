@@ -1,0 +1,7 @@
+ansible_pkgs_list:
+  - ansible
+  - git
+  - git-crypt
+  - python3-GitPython
+  - patch
+ 

@@ -1,19 +1,19 @@
 ---
+- name: Importing specific distro variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+    - "{{ ansible_distribution }}.yml"
+
 - name: Installing required repositories 
   yum:
-    state: installed
     name: "{{ ansible_repo_pkg }}"
+    state: installed
 
-- name: Ensuring some pkgs are installed 
-  yum:
+- name: Ensuring some pkgs are installed
+  yum: 
+    name: "{{ ansible_pkgs_list }}" 
     state: latest
-    name: "{{ item }}"
-  with_items:
-    - ansible
-    - git
-    - git-crypt
-    - GitPython
-    - patch
 
 - name: Creating the ansible inventory owner
   user:
@@ -176,9 +176,9 @@
   loop_control:
      label: "{{ item.name }}"         
 
-- name: Ensuring we have local ansible-roles-ctl tool
+- name: Distribute the ansible-roles-ctl tool (from upstream https://gitlab.com/osas/ansible-roles-ctl)
   copy:
-    src: ansible-roles-ctl
+    src: "{{ ansible_distribution_major_version }}/ansible-roles-ctl"
     dest: /usr/bin/ansible-roles-ctl
     mode: 0755
 
@@ -202,7 +202,7 @@
   loop_control:
     label: "{{ item.name }}"       
 
-- name: Upadating all roles based on requirements.yml
+- name: Updating all roles based on requirements.yml
   command: "ansible-roles-ctl update"
   args:
     chdir: "{{ item.base_path }}"

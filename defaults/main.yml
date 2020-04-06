@@ -3,11 +3,11 @@
 # We'll define multiple paths where to checkout and which keys to use
 
 # Ansible version for CentOS we want on the mgmt station
-ansible_repo_pkg: centos-release-ansible26
+ansible_repo_pkg: centos-release-ansible-29
 
 # By default we'll check out mitogen plugin, but we can enable it per ansible config
 mitogen_scm_url: https://github.com/dw/mitogen.git
-mitogen_tag: v0.2.8
+mitogen_tag: v0.2.9
 
 # Do we need to patch mitogen (patches before new release)
 mitogen_needs_patches: False
