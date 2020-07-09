@@ -24,6 +24,17 @@ gathering = smart
 fact_caching = jsonfile
 fact_caching_connection = .ansible_cache
 timeout = 30
+{% if ansible_use_ara %}
+callback_plugins=/usr/lib/python3.6/site-packages/ara/plugins/callback
+action_plugins=/usr/lib/python3.6/site-packages/ara/plugins/action
+lookup_plugins=/usr/lib/python3.6/site-packages/ara/plugins/lookup
+{% endif %}
+
+{% if ansible_use_ara %}
+[ara]
+api_client = http
+api_server = http://127.0.0.1:8000
+{% endif %}
 
 [inventory]
 
