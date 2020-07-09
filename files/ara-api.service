@@ -1,0 +1,19 @@
+ 
+[Unit]
+Description=ARA api service
+DefaultDependencies=no
+After=network.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=oneshot
+User=ara
+Group=ara
+ExecStart=/var/lib/ara/podman-ara start
+ExecStop=/var/lib/ara/podman-ara stop
+RemainAfterExit=yes
+#Restart=on-failure
+RestartSec=1
+

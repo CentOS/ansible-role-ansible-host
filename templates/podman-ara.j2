@@ -1,0 +1,24 @@
+#!/bin/bash
+action="$1"
+# Some settings
+local_vol="/var/lib/ara"
+local_port="{{ ansible_ara_server_port }}"
+container_image="{{ ansible_ara_container_image }}"
+
+if [ "$action" == "start" ] ; then
+  podman ps --all|grep -q ara-api-server 
+  if [ "$?" -eq "0" ] ; then
+    echo "container ara-api-server defined, starting it"
+    exec podman start ara-api-server
+  else
+    echo "container ara-api-server undefined, starting it"
+    exec podman run --name ara-api-server --detach --volume ${local_vol}:/opt/ara:z -p ${local_port}:8000 ${container_image} 
+  fi
+  exit 0
+elif [ "$action" == "stop" ] ; then
+  exec podman stop ara-api-server >/dev/null
+  exit 0
+else
+  logger "wrong action ${action} for podman ara"
+fi
+

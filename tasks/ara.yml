@@ -1,0 +1,58 @@
+# Tasks included if we want to have local ara for ansible reports
+- block:
+    - name: Creating ara user to start ara container
+      user:
+        name: ara
+        comment: AnsibleRecordsAnsible service user
+
+    - name: Install pkgs to start and connect to ara api container
+      yum:
+        name: ['podman', 'git', 'ara']
+        state: installed
+
+    - name: Pulling container if needed
+      podman_image:
+        name: "{{ ansible_ara_container_image }}"
+      become_user: ara   
+
+    - name: Creating directory for ara sqlite db and files
+      file:
+        path: /var/lib/ara
+        state: directory
+        owner: ara
+
+    # This wrapper/init for systemd and selinux policy will have to be removed once User= can be used for podman
+    # See https://github.com/containers/podman/issues/6582 and https://github.com/containers/libpod/issues/5572
+    - name: Creating wrapper script to start ara-api
+      template:
+        src: podman-ara.j2
+        dest: /var/lib/ara/podman-ara
+        mode: 0750
+        owner: ara
+
+    - name: Distributing custom selinux policies
+      copy: 
+        src: "selinux/{{ ansible_distribution_version[0] }}/{{ item }}" 
+        dest: "/etc/selinux/centos/{{ item }}"
+      register: sepolicy
+      with_items:
+        - podman-unpriv-init.pp
+
+    - name: reload custom selinux files
+      shell: /usr/sbin/semodule -u "/etc/selinux/centos/podman-unpriv-init.pp"
+      when: ansible_selinux.status == "enabled" and sepolicy is changed 
+ 
+    - name: systemd unit to start ara container
+      copy:
+        src: ara-api.service
+        dest: /etc/systemd/system/ara-api.service
+      register: ara_systemd
+  
+    - name: Enable the ara-service container
+      systemd:
+        name: ara-api
+        daemon-reload: "{% if ara_systemd is changed %}yes{% else %}no{% endif %}"
+        state: started
+        enabled: yes  
+  tags:
+    - ara
