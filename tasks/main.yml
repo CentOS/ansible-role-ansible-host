@@ -61,6 +61,7 @@
   copy:
     src: "{{ pkistore }}/git/{{ item.1.git_crypt_key }}"
     dest: "{{ item.0.credstore }}/{{ item.1.git_crypt_key }}"
+    owner: "{{ item.0.owner }}"
   with_subelements: 
     - "{{ ansible_configs }}"
     - scm_repos
@@ -163,6 +164,7 @@
   template:
     src: ansible.cfg.j2
     dest: "{{ item.base_path }}/ansible.cfg"
+    owner: "{{ item.owner }}"
   with_items: "{{ ansible_configs }}"   
   loop_control:
      label: "{{ item.name }}"         
