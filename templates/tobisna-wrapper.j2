@@ -22,13 +22,14 @@ EOF
 }
 
 function refresh_facts() {
-  ansible-playbook playbooks/adhoc-refresh-facts.yml --limit '!manual-run' > /dev/null 2>&1
+  ansible-playbook playbooks/adhoc-refresh-facts.yml --limit '!manual-run' -e ara_playbook_name=refresh-facts > /dev/null 2>&1
 }
 
 function play_roles() {
-  ansible-playbook playbooks/role-ansible-host.yml --limit '!manual-run' > /dev/null 2>&1
+  ansible-playbook playbooks/role-ansible-host.yml --limit '!manual-run' -e ara_playbook_name=ansible-host > /dev/null 2>&1
   ls playbooks/role-*.yml|egrep -v 'ansible-host|role-all'|while read role ; do
-    ansible-playbook $role --limit '!manual-run' > /dev/null
+    label=$(echo $role|sed 's#playbooks/##g'|sed 's#.yml##g') 
+    ansible-playbook $role --limit '!manual-run' -e ara_playbook_name=${label} > /dev/null
   done
 }
 
