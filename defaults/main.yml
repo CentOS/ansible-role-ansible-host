@@ -26,6 +26,12 @@ ansible_configs:
     env: staging    
     log_to_disk: True # will log to /var/log/ansible/my_inventory
     ssh_host_key_check: True # False if we want blindly to accept ssh connections to such inventory
+    ssh_priv_key: id_rsa # Private key (passphrase protected !) to import on ansible-host
+    cron: True # If we want to have ping/refresh facts and also play all roles at regular interval
+    cron_refresh_minute: "*/25"
+    cron_refresh_hour: "*"
+    cron_roles_play_minute: "1"
+    cron_roles_play_hour: "*"
     scm_repos:
       - name: playbooks
         url: https://github.com/CentOS/ansible-infra-playbooks.git
@@ -43,10 +49,14 @@ ansible_configs:
         git_crypted: True
         git_crypt_key: filestore.key
 
+
 # Reporting
 # Do we want ARA installed locally
 ansible_use_ara: True
 # We'll use containers for now, while waiting for proper rpms for api server to be built
 # Client part is already packaged for .el8
 ansible_ara_server_port: 8000
-ansible_ara_container_image: 'recordsansible/ara-api:distribution-latest'
+ansible_ara_container_image: 'recordsansible/ara-api:centos8-pypi-latest'
+# Number of days to keep in local ARA database (pruning every day with that value)
+ansible_ara_prune_days: 2
+

@@ -25,6 +25,50 @@
   loop_control:
     label: "{{ item.owner }}"
 
+- name: Ensuring we can drop key in correct dir
+  file:
+    path: "{{ item.homedir }}/.ssh"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: 0700
+  with_items: "{{ ansible_configs }}"  
+  loop_control:
+    label: "{{ item.owner }}"
+  tags:
+    - creds
+
+- name: Ensuring we'll unlock in agent
+  blockinfile:
+    path: "{{ item.homedir }}/.bashrc"
+    block: |
+      # Unlocking on first login, asking for passphrase
+      if [ ! -S ~/.ssh/ssh_auth_sock ]; then
+        echo "[+] Unlocking keys for ansible automation ...."
+        eval $(ssh-agent)
+        ln -sf "$SSH_AUTH_SOCK" ~/.ssh/ssh_auth_sock
+      fi
+      export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
+      ssh-add -l > /dev/null || ssh-add
+  with_items: "{{ ansible_configs }}"  
+  loop_control:
+    label: "{{ item.owner }}"
+  tags:
+    - bash
+
+- name: Distributing keys
+  copy:
+    src: "{{ pkistore }}/ssh/{{ item.ssh_priv_key }}"
+    dest: "{{ item.homedir }}/.ssh/id_rsa"
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: 0600
+  with_items: "{{ ansible_configs }}"  
+  loop_control:
+    label: "{{ item.owner }}"
+  tags:
+    - creds
+
 - name: Ensuring ansible can log to a specific directory per inventory
   file:
     path: "/var/log/ansible/{{ item.name }}"
@@ -43,7 +87,6 @@
   loop_control:
     label: "{{ item.owner }}"
   when: item.log_to_disk
-
    
 - name: Ensuring we have a local creds store for git-crypt keys
   file:
@@ -218,12 +261,55 @@
   file:
     state: link
     src: "{{ item.base_path }}/roles"
-    path: "{{ item.base_path }}/playbooks/roles"
+    path: "{{ item.base_path }}/playbooks/roles"    
   with_items:
     - "{{ ansible_configs }}"
   loop_control:
     label: "{{ item.name }}"
 
+- name: Ansible wrapper script per inventory
+  template:
+    src: tobisna-wrapper.j2
+    dest: "{{ item.base_path }}/tobisna-wrapper"
+    mode: 0750
+    owner: "{{ item.owner }}"
+  with_items:
+    - "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags:
+    - wrapper
+  
+
+- name: Enabling ansible ping/refresh facts in cache
+  cron:
+    name: "{{ item.name }} ansible facts refresh"
+    minute: "{{ item.cron_refresh_minute }}"
+    hour: "{{ item.cron_refresh_hour }}"
+    job: " {{ item.base_path }}/tobisna-wrapper -r"
+    user: "{{ item.owner }}"
+  with_items:
+    - "{{ ansible_configs }}"
+  when: item.cron
+  loop_control:
+    label: "{{ item.name }}"
+  tags:
+    - cron
+
+- name: Enabling ansible regular roles play
+  cron:
+    name: "{{ item.name }} ansible roles play"
+    minute: "{{ item.cron_roles_play_minute }}"
+    hour: "{{ item.cron_roles_play_hour }}"
+    job: " {{ item.base_path }}/tobisna-wrapper -p"
+    user: "{{ item.owner }}"
+  with_items:
+    - "{{ ansible_configs }}"
+  when: item.cron 
+  loop_control:
+    label: "{{ item.name }}"
+  tags:
+    - cron
 
 - name: ARA setup
   include_tasks: ara.yml

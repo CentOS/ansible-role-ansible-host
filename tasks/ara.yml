@@ -53,6 +53,15 @@
         name: ara-api
         daemon-reload: "{% if ara_systemd is changed %}yes{% else %}no{% endif %}"
         state: started
-        enabled: yes  
+        enabled: yes 
+
+    - name: Pruning old records from ARA DB
+      cron:
+        name: ARA pruning job
+        user: ara
+        hour: '23'
+        minute: '59'
+        job: "podman run -ti --tty --volume /var/lib/ara:/opt/ara:z {{ ansible_ara_container_image }} ara-manage prune --confirm --days {{ ansible_ara_prune_days }} >/dev/null "
+
   tags:
     - ara

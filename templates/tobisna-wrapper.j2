@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Purposes : wrapper around ansible call
+# Called by : cron
+# Template coming from ansible : don't edit !
+# Notes:
+#   This wrapper around ansible will verify that we have ssh-agent/sock
+#   If so it will either refresh (-r) or play all roles playbooks (-p)
+#   It will also automatically exclude (through --limit) the 'manual-run' group, for hosts that while in ansible inventory, require some other ssh keys or routes/hops to be reachable/managed
+
+# Some variables
+ansible_inventory_dir="{{ item.base_path }}"
+
+function usage() {
+cat << EOF
+You need to call the script like this : $0 -arguments
+ -r : launch the refresh-facts adhoc playbook, to keep local facts cache up2date
+ -p : Play all found roles (except role-all)
+ -h : display this help
+EOF
+
+}
+
+function refresh_facts() {
+  ansible-playbook playbooks/adhoc-refresh-facts.yml --limit '!manual-run' > /dev/null 2>&1
+}
+
+function play_roles() {
+  ansible-playbook playbooks/role-ansible-host.yml --limit '!manual-run' > /dev/null 2>&1
+  ls playbooks/role-*.yml|egrep -v 'ansible-host|role-all'|while read role ; do
+    ansible-playbook $role --limit '!manual-run' > /dev/null
+  done
+}
+
+while getopts "hrp" option
+do
+  case ${option} in
+    h)
+      usage
+      exit 1
+      ;;
+    r)
+     op="refresh_facts"
+      ;;
+    p)
+     op="play_roles"
+     ;;
+    ?)
+      usage
+      exit
+      ;;
+  esac
+done
+
+pushd ${ansible_inventory_dir} >/dev/null
+
+# Checking if we have ssh socket for agent
+if [ ! -S ~/.ssh/ssh_auth_sock ]; then
+  exit 1
+else
+  export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
+fi
+# Now kicking real job
+${op}
+
+popd > /dev/null
