@@ -3,5 +3,6 @@ ansible_pkgs_list:
   - git
   - git-crypt
   - GitPython
+  - python-netaddr
   - patch
  
