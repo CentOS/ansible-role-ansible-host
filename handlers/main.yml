@@ -1,1 +1,6 @@
 # Defaults handlers for role ansible-host
+
+- name: restart_ara_api
+  service:
+    name: ara-api
+    state: restarted

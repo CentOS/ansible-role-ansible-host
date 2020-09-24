@@ -8,12 +8,13 @@
     - name: Install pkgs to start and connect to ara api container
       yum:
         name: ['podman', 'git', 'ara']
-        state: installed
+        state: latest
 
     - name: Pulling container if needed
       podman_image:
         name: "{{ ansible_ara_container_image }}"
       become_user: ara   
+      notify: restart_ara_api
 
     - name: Creating directory for ara sqlite db and files
       file:
@@ -59,9 +60,9 @@
       cron:
         name: ARA pruning job
         user: ara
-        hour: '23'
+        hour: '*/2'
         minute: '59'
-        job: "podman run -ti --tty --volume /var/lib/ara:/opt/ara:z {{ ansible_ara_container_image }} ara-manage prune --confirm --days {{ ansible_ara_prune_days }} >/dev/null "
+        job: "podman exec -ti --tty ara-api-server  ara playbook prune --days {{ ansible_ara_prune_days }} --limit {{ ansible_ara_prune_limit }} --confirm  >/dev/null"
 
   tags:
     - ara

@@ -58,5 +58,6 @@ ansible_use_ara: True
 ansible_ara_server_port: 8000
 ansible_ara_container_image: 'recordsansible/ara-api:centos8-pypi-latest'
 # Number of days to keep in local ARA database (pruning every day with that value)
-ansible_ara_prune_days: 2
-
+ansible_ara_prune_days: 7
+# Number of ara records to process per call
+ansible_ara_prune_limit: 5000
