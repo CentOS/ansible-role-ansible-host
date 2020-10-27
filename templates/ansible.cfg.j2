@@ -44,6 +44,9 @@ default_labels = {{ item.name }}
 [paramiko_connection]
 
 [ssh_connection]
+ssh_args = -o ControlMaster=auto -o ControlPersist={{ ansible_ssh_ControlPersist }} -o ServerAliveInterval={{ ansible_ssh_ServerAliveInterval }}
+control_path_dir = ~/.ansible/cp
+
 
 [persistent_connection]
 

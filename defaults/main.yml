@@ -49,6 +49,9 @@ ansible_configs:
         git_crypted: True
         git_crypt_key: filestore.key
 
+# ansible ssh
+ansible_ssh_ControlPersist: 30m
+ansible_ssh_ServerAliveInterval: '20'
 
 # Reporting
 # Do we want ARA installed locally
