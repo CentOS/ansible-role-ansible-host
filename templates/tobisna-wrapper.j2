@@ -31,7 +31,7 @@ function play_roles() {
     label=$(echo $role|sed 's#playbooks/##g'|sed 's#.yml##g')
     # ensuring latest inventory/filestore/pkistore from git repo
     for repo in inventory filestore pkistore ; do pushd $repo >/dev/null; git pull >/dev/null; popd >/dev/null; done
-    pushd roles/${label/role-/} >/dev/null ; git pull >/dev/null ; popd >/dev/null 
+    test -d roles/${label/role-/} && (pushd roles/${label/role-/} >/dev/null ; git pull >/dev/null ; popd >/dev/null) 
     ansible-playbook $role --limit '!manual-run' -e ara_playbook_name=${label} > /dev/null
   done
 }
