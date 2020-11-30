@@ -59,8 +59,8 @@ ansible_use_ara: True
 # We'll use containers for now, while waiting for proper rpms for api server to be built
 # Client part is already packaged for .el8
 ansible_ara_server_port: 8000
-ansible_ara_container_image: 'recordsansible/ara-api:centos8-pypi-latest'
+ansible_ara_container_image: 'quay.io/recordsansible/ara-api:centos8-pypi-latest'
 # Number of days to keep in local ARA database (pruning every day with that value)
 ansible_ara_prune_days: 7
 # Number of ara records to process per call
-ansible_ara_prune_limit: 5000
+ansible_ara_prune_limit: 2000
