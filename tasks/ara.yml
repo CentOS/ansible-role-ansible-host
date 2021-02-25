@@ -1,13 +1,26 @@
 # Tasks included if we want to have local ara for ansible reports
 - block:
-    - name: Creating ara user to start ara container
+    - name: Creating ARA service user
       user:
         name: ara
         comment: AnsibleRecordsAnsible service user
 
+    - name: Creating directory for ara sqlite db and files
+      file:
+        path: /var/lib/ara
+        state: directory
+        owner: ara
+
+  tags:
+    - ara
+
+- block:
     - name: Install pkgs to start and connect to ara api container
       yum:
-        name: ['podman', 'git', 'ara']
+        name: 
+          - podman
+          - git
+          - ara
         state: latest
 
     - name: Pulling container if needed
@@ -15,12 +28,6 @@
         name: "{{ ansible_ara_container_image }}"
       become_user: ara   
       notify: restart_ara_api
-
-    - name: Creating directory for ara sqlite db and files
-      file:
-        path: /var/lib/ara
-        state: directory
-        owner: ara
 
     # This wrapper/init for systemd and selinux policy will have to be removed once User= can be used for podman
     # See https://github.com/containers/podman/issues/6582 and https://github.com/containers/libpod/issues/5572
@@ -45,11 +52,83 @@
  
     - name: systemd unit to start ara container
       copy:
-        src: ara-api.service
+        src: ara-api-podman.service
         dest: /etc/systemd/system/ara-api.service
       register: ara_systemd
   
     - name: Enable the ara-service container
+      systemd:
+        name: ara-api
+        daemon-reload: "{% if ara_systemd is changed %}yes{% else %}no{% endif %}"
+        state: started
+        enabled: yes 
+ 
+    - name: Pruning old records from ARA DB
+      cron:
+        name: ARA pruning job
+        user: ara
+        hour: '*/2'
+        minute: '59'
+        job: "podman exec -ti --tty ara-api-server  ara playbook prune --days {{ ansible_ara_prune_days }} --limit {{ ansible_ara_prune_limit }} --confirm  >/dev/null"
+  when: ansible_ara_container
+  tags:
+    - ara
+
+- block:
+    - name: Install ARA pkgs
+      yum:
+        name:
+          - ara
+          - python3-ara-server
+          - python3-gunicorn
+        state: latest
+      register: ara_pkg_install
+
+    - name: Generate a random secret key to init ARA
+      command: python3 -c "from django.utils.crypto import get_random_string; print(get_random_string(length=50))"
+      args:
+        creates: /home/ara/.ara/server/settings.yaml
+      register: generated_key
+    - name: Retrieve existing key for template if already created
+      shell: "grep SECRET /home/ara/.ara/server/settings.yaml |cut -f 2 -d ':'|tr -d [:blank:]"
+      args:
+        removes: /home/ara/.ara/server/settings.yaml
+      register: generated_key  
+
+    - name: Set generated key to init as variable on init
+      set_fact:
+        ara_api_secret_key: "{{ generated_key.stdout }}"
+    
+    - name: Ensuring we have path to store settings file for ara
+      file:
+       path: "/home/ara/{{ item }}"
+       state: directory
+       owner: ara
+       group: ara
+      with_items:
+        - .ara
+        - .ara/server
+    
+    - name: Dropping config file
+      template:
+        src: ara-settings.yaml.j2
+        dest: /home/ara/.ara/server/settings.yaml
+        owner: ara
+        group: ara
+
+    - name: Running ara-manage migrate on new/updated install
+      command: ara-manage migrate
+      become_user: ara
+      when: ara_pkg_install is changed
+
+    - name: systemd unit to start ARA api
+      template:
+        src: ara-api.service.j2
+        dest: /etc/systemd/system/ara-api.service
+      register: ara_systemd
+      notify: restart_ara_api
+  
+    - name: Enable the ara-api server
       systemd:
         name: ara-api
         daemon-reload: "{% if ara_systemd is changed %}yes{% else %}no{% endif %}"
@@ -62,7 +141,8 @@
         user: ara
         hour: '*/2'
         minute: '59'
-        job: "podman exec -ti --tty ara-api-server  ara playbook prune --days {{ ansible_ara_prune_days }} --limit {{ ansible_ara_prune_limit }} --confirm  >/dev/null"
+        job: "ara playbook prune --days {{ ansible_ara_prune_days }} --limit {{ ansible_ara_prune_limit }} --confirm  >/dev/null"
 
+  when: ansible_ara_pkg
   tags:
     - ara

@@ -1,0 +1,17 @@
+ 
+[Unit]
+Description=ARA api service
+DefaultDependencies=no
+After=network.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+User=ara
+Group=ara
+WorkingDirectory=/home/ara/.ara
+ExecStart=/usr/bin/gunicorn --workers={{ ansible_ara_workers }}  ara.server.wsgi
+ExecStop=/bin/kill -s TERM $MAINPID
+

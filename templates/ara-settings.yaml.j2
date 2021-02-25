@@ -1,0 +1,54 @@
+---
+default:
+  ALLOWED_HOSTS:
+  - ::1
+  - 127.0.0.1
+  - localhost
+  BASE_DIR: /home/ara/.ara/server
+  CORS_ORIGIN_ALLOW_ALL: false
+  CORS_ORIGIN_REGEX_WHITELIST: []
+  CORS_ORIGIN_WHITELIST:
+  - http://127.0.0.1:8000
+  - http://localhost:3000
+  DATABASE_CONN_MAX_AGE: 0
+  DATABASE_ENGINE: django.db.backends.sqlite3
+  DATABASE_HOST: null
+  DATABASE_NAME: /var/lib/ara/ara.sqlite
+  DATABASE_OPTIONS: {}
+  DATABASE_PASSWORD: null
+  DATABASE_PORT: null
+  DATABASE_USER: null
+  DEBUG: false
+  DISTRIBUTED_SQLITE: false
+  DISTRIBUTED_SQLITE_PREFIX: ara-report
+  DISTRIBUTED_SQLITE_ROOT: /var/www/logs
+  EXTERNAL_AUTH: false
+  LOGGING:
+    disable_existing_loggers: false
+    formatters:
+      normal:
+        format: '%(asctime)s %(levelname)s %(name)s: %(message)s'
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: normal
+        level: INFO
+        stream: ext://sys.stdout
+    loggers:
+      ara:
+        handlers:
+        - console
+        level: INFO
+        propagate: 0
+    root:
+      handlers:
+      - console
+      level: INFO
+    version: 1
+  LOG_LEVEL: INFO
+  PAGE_SIZE: 100
+  READ_LOGIN_REQUIRED: false
+  SECRET_KEY: {{ ara_api_secret_key }}
+  TIME_ZONE: UTC
+  WRITE_LOGIN_REQUIRED: false
+
