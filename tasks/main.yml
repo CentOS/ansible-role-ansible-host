@@ -33,6 +33,7 @@
     group: "{{ item.owner }}"
     mode: 0700
   with_items: "{{ ansible_configs }}"  
+  when: item.ssh_priv_key is defined
   loop_control:
     label: "{{ item.owner }}"
   tags:
@@ -50,7 +51,8 @@
       fi
       export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
       ssh-add -l > /dev/null || ssh-add
-  with_items: "{{ ansible_configs }}"  
+  with_items: "{{ ansible_configs }}"
+  when: item.ssh_priv_key is defined
   loop_control:
     label: "{{ item.owner }}"
   tags:
@@ -64,6 +66,7 @@
     group: "{{ item.owner }}"
     mode: 0600
   with_items: "{{ ansible_configs }}"  
+  when: item.ssh_priv_key is defined
   loop_control:
     label: "{{ item.owner }}"
   tags:
@@ -74,6 +77,8 @@
     path: "/var/log/ansible/{{ item.name }}"
     state: directory
     owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: '2770'
   with_items: "{{ ansible_configs }}"
   loop_control:
     label: "{{ item.owner }}"
@@ -105,6 +110,7 @@
     src: "{{ pkistore }}/git/{{ item.1.git_crypt_key }}"
     dest: "{{ item.0.credstore }}/{{ item.1.git_crypt_key }}"
     owner: "{{ item.0.owner }}"
+    group: "{{ item.0.owner }}"
   with_subelements: 
     - "{{ ansible_configs }}"
     - scm_repos
@@ -216,6 +222,8 @@
   file:
     state: directory
     owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: '2770'
     path: "{{ item.base_path}}/.ansible_cache"
   with_items: "{{ ansible_configs }}" 
   loop_control:
