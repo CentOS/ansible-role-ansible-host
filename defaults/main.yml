@@ -26,7 +26,9 @@ ansible_configs:
     env: staging    
     log_to_disk: True # will log to /var/log/ansible/my_inventory
     ssh_host_key_check: True # False if we want blindly to accept ssh connections to such inventory
-    ssh_priv_key: id_rsa # Private key (passphrase protected !) to import on ansible-host
+    ssh_priv_key: id_rsa # Private key (passphrase protected !) to import on ansible-host, if defined
+    vault_file:          # if defined , it will reference the file containing vault pass, see below (optional)
+    vault_password:     # string to be copied to a vault_file (see above) to unlock automatically
     cron: True # If we want to have ping/refresh facts and also play all roles at regular interval
     cron_refresh_minute: "*/25"
     cron_refresh_hour: "*"

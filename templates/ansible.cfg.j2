@@ -8,6 +8,9 @@ transport	= ssh
 host_key_checking = False
 {% endif %}
 retry_files_enabled = False
+{% if item.vault_file is defined %}
+vault_password_file = {{ item.vault_file }}
+{% endif %}
 {% if item.use_mitogen %}
 strategy_plugins = {{ item.base_path }}/mitogen/ansible_mitogen/plugins/strategy
 strategy = mitogen_linear

@@ -72,6 +72,21 @@
   tags:
     - creds
 
+- name: Distributing vault file (if defined)
+  copy:
+    content: "{{ item.vault_password }}"
+    dest: "{{ item.vault_file }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: 0640
+  with_items: "{{ ansible_configs }}"  
+  when: item.vault_file is defined
+  loop_control:
+    label: "{{ item.owner }}"
+  tags:
+    - vault
+
+
 - name: Ensuring ansible can log to a specific directory per inventory
   file:
     path: "/var/log/ansible/{{ item.name }}"
@@ -214,9 +229,14 @@
     src: ansible.cfg.j2
     dest: "{{ item.base_path }}/ansible.cfg"
     owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: '0640'
   with_items: "{{ ansible_configs }}"   
   loop_control:
-     label: "{{ item.name }}"         
+     label: "{{ item.name }}"
+  tags:
+    - config
+    - vault
 
 - name: Creating facts caching directory for ansible
   file:
