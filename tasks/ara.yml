@@ -83,6 +83,7 @@
           - python3-gunicorn
         state: latest
       register: ara_pkg_install
+      notify: restart_ara_api
 
     - name: Generate a random secret key to init ARA
       command: python3 -c "from django.utils.crypto import get_random_string; print(get_random_string(length=50))"
