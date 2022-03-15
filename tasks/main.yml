@@ -307,8 +307,20 @@
     label: "{{ item.name }}"
   tags:
     - wrapper
-  
 
+- name: Interactive Ansible on demand script per inventory
+  template:
+    src: ansible-ara-run.j2
+    dest: "{{ item.base_path }}/ansible-ara-run"
+    mode: 0750
+    owner: "{{ item.owner }}"
+  with_items:
+    - "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags:
+    - wrapper
+  
 - name: Enabling ansible ping/refresh facts in cache
   cron:
     name: "{{ item.name }} ansible facts refresh"

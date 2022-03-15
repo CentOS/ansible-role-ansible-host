@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# Purposes : wrapper around ansible call
+# Called by : on demand trigger (ssh or else)
+# Template coming from ansible : don't edit !
+# Notes:
+#   This wrapper around ansible will verify that we have ssh-agent/sock
+#   If you call it through ssh, ensure that you use ssh -t to have also direct output from ansible
+#   Something like 'ssh -t <hostname> "sudo su - <ansible_user> --command=\"/<path_to_this_script> \""'
+
+# Some variables
+ansible_inventory_dir="{{ item.base_path }}"
+
+# Some functions
+function f_log() {
+   echo "[+] $(date +%Y%m%d-%H:%M) ansible-ara-run -> $*" 
+}
+
+pushd ${ansible_inventory_dir} >/dev/null
+
+# Checking if we have ssh socket for agent
+if [ ! -S ~/.ssh/ssh_auth_sock ]; then
+  f_log "[ERROR] no ssh_auth_sock found"
+  exit 1
+else
+  export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
+fi
+# Now kicking real job
+
+f_log "== Ansible Ara manual trigger =="
+read -p "Which ansible role you want to play ? (like haproxy, without -role) => " role
+possible_tags=$(ansible-playbook playbooks/role-${role}.yml --list-tags|grep TASK)
+echo "List of possible tags for role ${role} : "
+echo " => ${possible_tags}"
+read -p "Do you want to call specific tag[s] and which one[s] ? (can be empty) => " tags
+read -p "Host/Group limits ? (default to whole group) => " limit
+
+if [ -z ${limit} ] ; then
+  limit_args=""
+else
+  limit_args="--limit ${limit}"
+fi
+
+if [ -z ${tags} ] ; then
+  tags_args=""
+else
+  tags_args="--tags ${tags}"
+fi
+
+f_log "Updating first inventory/pkistore/filestore"
+for dir in filestore pkistore inventory ; do pushd $dir >/dev/null ; git pull 2>&1 >/dev/null ; popd >/dev/null; done
+f_log "Checking role [$role] is present and up2date ..."
+if [ -d roles/${role} ] ; then
+  pushd roles/${role} >/dev/null ; git pull 2>&1 >/dev/null ; popd >/dev/null
+else
+  f_log "[ERROR] Ansible role [${role}] not found locally"
+  exit 1
+fi
+f_log "Calling now ansible with ara reporting ..."
+f_log "ansible-playbook playbooks/role-${role}.yml ${limit_args} ${tags_args} -e ara_playbook_name=role-${role}"
+ansible-playbook playbooks/role-${role}.yml ${limit_args} ${tags_args} -e ara_playbook_name=role-${role}
+
+popd > /dev/null
