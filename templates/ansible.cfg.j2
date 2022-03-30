@@ -2,6 +2,7 @@
 inventory	= {{ item.base_path }}/inventory
 force_valid_group_names = ignore
 roles_path 	= {{ item.base_path }}/roles   
+collections_path = {{ item.base_path }}/collections
 forks		= {{ item.forks }}
 transport	= ssh
 {% if not item.ssh_host_key_check %}
@@ -21,16 +22,16 @@ strategy = linear
 log_path = /var/log/ansible/{{ item.name }}/ansible.log
 {% endif %}
 # Adding some interesting stats
-callback_whitelist = profile_tasks, timer
+callback_enabled = profile_tasks, timer
 # Switch to smart so also using cached facts
 gathering = smart
 fact_caching = jsonfile
 fact_caching_connection = .ansible_cache
 timeout = 30
 {% if ansible_use_ara %}
-callback_plugins=/usr/lib/python3.6/site-packages/ara/plugins/callback
-action_plugins=/usr/lib/python3.6/site-packages/ara/plugins/action
-lookup_plugins=/usr/lib/python3.6/site-packages/ara/plugins/lookup
+callback_plugins=/home/{{ item.owner }}/.local/lib/python3.8/site-packages/ara/plugins/callback
+action_plugins=/home/{{ item.owner }}/.local/lib/python3.8/site-packages/ara/plugins/action
+lookup_plugins=/home/{{ item.owner }}/.local/lib/python3.8/site-packages/ara/plugins/lookup
 {% endif %}
 
 {% if ansible_use_ara %}

@@ -4,16 +4,23 @@
   with_first_found:
     - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
     - "{{ ansible_distribution }}.yml"
+  tags:
+    - vars
 
 - name: Installing required repositories 
   yum:
     name: "{{ ansible_repo_pkg }}"
     state: installed
+  tags:
+    - pkgs
 
 - name: Ensuring some pkgs are installed
   yum: 
     name: "{{ ansible_pkgs_list }}" 
     state: latest
+  tags:
+    - pkgs
+
 
 - name: Creating the ansible inventory owner
   user:
@@ -24,6 +31,21 @@
   with_items: "{{ ansible_configs }}"
   loop_control:
     label: "{{ item.owner }}"
+  tags:
+    - userenv
+
+- name: Ensuring we have pip pkgs for ansible-core compat
+  pip:
+    executable: pip3.8
+    name: "{{ ansible_pip_pkgs }}"
+    state: present
+    extra_args: --user
+  become_user: "{{ item.owner }}"  
+  with_items: "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.owner }}"
+  tags:
+    - userenv
 
 - name: Ensuring we can drop key in correct dir
   file:
@@ -249,12 +271,6 @@
   loop_control:
      label: "{{ item.name }}"         
 
-- name: Distribute the ansible-roles-ctl tool (from upstream https://gitlab.com/osas/ansible-roles-ctl)
-  copy:
-    src: "{{ ansible_distribution_major_version }}/ansible-roles-ctl"
-    dest: /usr/bin/ansible-roles-ctl
-    mode: 0755
-
 - name: Correct symlink for requirements.yml in basedir
   file:
     state: link
@@ -265,8 +281,8 @@
   loop_control:
     label: "{{ item.name }}"
 
-- name: Fetching all needed roles
-  command: "ansible-roles-ctl install"
+- name: Fetching all needed roles and collections
+  command: "/home/{{ item.owner }}/.local/bin/ansible-roles-ctl install"
   args:
     chdir: "{{ item.base_path }}"
   become: True
@@ -276,7 +292,7 @@
     label: "{{ item.name }}"       
 
 - name: Updating all roles based on requirements.yml
-  command: "ansible-roles-ctl update"
+  command: "/home/{{ item.owner }}/.local/bin/ansible-roles-ctl update"
   args:
     chdir: "{{ item.base_path }}"
   become: True

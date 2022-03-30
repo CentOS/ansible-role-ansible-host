@@ -1,8 +1,13 @@
 ansible_pkgs_list:
-  - ansible
+  - ansible-core
   - git
   - git-crypt
   - python3-GitPython
   - python3-netaddr
   - patch
+  - python38-pip # needed as ansible-core is relying on py3.8 and we need some python libraries
  
+ansible_pip_pkgs:
+  - ansible-roles-ctl==2.0.0
+  - ara==1.5.7
+  - netaddr==0.8.0

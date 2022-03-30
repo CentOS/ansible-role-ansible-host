@@ -3,11 +3,13 @@
 # We'll define multiple paths where to checkout and which keys to use
 
 # Ansible version for CentOS we want on the mgmt station
+# Worth knowing that on 8-stream, ansible-core is in distro, so repo is just used 
+# to fetch other pkgs, like ara, but not ansible-core engine itself
 ansible_repo_pkg: centos-release-ansible-29
 
 # By default we'll check out mitogen plugin, but we can enable it per ansible config
-mitogen_scm_url: https://github.com/dw/mitogen.git
-mitogen_tag: v0.2.10-rc.0
+mitogen_scm_url: https://github.com/mitogen-hq/mitogen.git
+mitogen_tag: v0.3.2
 
 # Do we need to patch mitogen (patches before new release)
 mitogen_needs_patches: False
