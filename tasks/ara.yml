@@ -1,12 +1,12 @@
 # Tasks included if we want to have local ara for ansible reports
 - block:
     - name: Creating ARA service user
-      user:
+      ansible.builtin.user:
         name: ara
         comment: AnsibleRecordsAnsible service user
 
     - name: Creating directory for ara sqlite db and files
-      file:
+      ansible.builtin.file:
         path: /var/lib/ara
         state: directory
         owner: ara
@@ -16,15 +16,15 @@
 
 - block:
     - name: Install pkgs to start and connect to ara api container
-      yum:
+      ansible.builtin.yum:
         name: 
           - podman
           - git
-          - ara
-        state: latest
+          - ara-{{ ansible_ara_version }}
+        state: installed
 
     - name: Pulling container if needed
-      podman_image:
+      containers.podman.podman_image:
         name: "{{ ansible_ara_container_image }}"
       become_user: ara   
       notify: restart_ara_api
@@ -32,7 +32,7 @@
     # This wrapper/init for systemd and selinux policy will have to be removed once User= can be used for podman
     # See https://github.com/containers/podman/issues/6582 and https://github.com/containers/libpod/issues/5572
     - name: Creating wrapper script to start ara-api
-      template:
+      ansible.builtin.template:
         src: podman-ara.j2
         dest: /var/lib/ara/podman-ara
         mode: 0750
@@ -47,7 +47,7 @@
         - podman-unpriv-init.pp
 
     - name: reload custom selinux files
-      shell: /usr/sbin/semodule -u "/etc/selinux/centos/podman-unpriv-init.pp"
+      ansible.builtin.shell: /usr/sbin/semodule -u "/etc/selinux/centos/podman-unpriv-init.pp"
       when: ansible_selinux.status == "enabled" and sepolicy is changed 
  
     - name: systemd unit to start ara container
@@ -57,14 +57,14 @@
       register: ara_systemd
   
     - name: Enable the ara-service container
-      systemd:
+      ansible.builtin.systemd:
         name: ara-api
         daemon-reload: "{% if ara_systemd is changed %}yes{% else %}no{% endif %}"
         state: started
         enabled: yes 
  
     - name: Pruning old records from ARA DB
-      cron:
+      ansible.builtin.cron:
         name: ARA pruning job
         user: ara
         hour: '*/2'
@@ -76,32 +76,29 @@
 
 - block:
     - name: Install ARA pkgs
-      yum:
-        name:
-          - ara
-          - python3-ara-server
-          - python3-gunicorn
-        state: latest
+      ansible.builtin.yum:
+        name: "{{ ansible_ara_pkgs }}"
+        state: installed
       register: ara_pkg_install
       notify: restart_ara_api
 
     - name: Generate a random secret key to init ARA
-      command: python3 -c "from django.utils.crypto import get_random_string; print(get_random_string(length=50))"
+      ansible.builtin.command: python3 -c "from django.utils.crypto import get_random_string; print(get_random_string(length=50))"
       args:
         creates: /home/ara/.ara/server/settings.yaml
       register: generated_key
     - name: Retrieve existing key for template if already created
-      shell: "grep SECRET /home/ara/.ara/server/settings.yaml |cut -f 2 -d ':'|tr -d [:blank:]"
+      ansible.builtin.shell: "grep SECRET /home/ara/.ara/server/settings.yaml |cut -f 2 -d ':'|tr -d [:blank:]"
       args:
         removes: /home/ara/.ara/server/settings.yaml
       register: generated_key  
 
     - name: Set generated key to init as variable on init
-      set_fact:
+      ansible.builtin.set_fact:
         ara_api_secret_key: "{{ generated_key.stdout }}"
     
     - name: Ensuring we have path to store settings file for ara
-      file:
+      ansible.builtin.file:
        path: "/home/ara/{{ item }}"
        state: directory
        owner: ara
@@ -111,33 +108,33 @@
         - .ara/server
     
     - name: Dropping config file
-      template:
+      ansible.builtin.template:
         src: ara-settings.yaml.j2
         dest: /home/ara/.ara/server/settings.yaml
         owner: ara
         group: ara
 
     - name: Running ara-manage migrate on new/updated install
-      command: ara-manage migrate
+      ansible.builtin.command: ara-manage migrate
       become_user: ara
       when: ara_pkg_install is changed
 
     - name: systemd unit to start ARA api
-      template:
+      ansible.builtin.template:
         src: ara-api.service.j2
         dest: /etc/systemd/system/ara-api.service
       register: ara_systemd
       notify: restart_ara_api
   
     - name: Enable the ara-api server
-      systemd:
+      ansible.builtin.systemd:
         name: ara-api
         daemon-reload: "{% if ara_systemd is changed %}yes{% else %}no{% endif %}"
         state: started
         enabled: yes 
 
     - name: Pruning old records from ARA DB
-      cron:
+      ansible.builtin.cron:
         name: ARA pruning job
         user: ara
         hour: '*/2'

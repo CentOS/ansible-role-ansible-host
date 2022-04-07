@@ -1,6 +1,6 @@
 ---
 - name: Importing specific distro variables
-  include_vars: "{{ item }}"
+  ansible.builtin.include_vars: "{{ item }}"
   with_first_found:
     - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
     - "{{ ansible_distribution }}.yml"
@@ -8,14 +8,14 @@
     - vars
 
 - name: Installing required repositories 
-  yum:
+  ansible.builtin.yum:
     name: "{{ ansible_repo_pkg }}"
     state: installed
   tags:
     - pkgs
 
 - name: Ensuring some pkgs are installed
-  yum: 
+  ansible.builtin.yum: 
     name: "{{ ansible_pkgs_list }}" 
     state: latest
   tags:
@@ -23,7 +23,7 @@
 
 
 - name: Creating the ansible inventory owner
-  user:
+  ansible.builtin.user:
     comment: "Automation bot for Ansible - {{ item.name }} workspace "
     name: "{{ item.owner }}"
     state: present
@@ -35,7 +35,7 @@
     - userenv
 
 - name: Ensuring we have pip pkgs for ansible-core compat
-  pip:
+  ansible.builtin.pip:
     executable: pip3.8
     name: "{{ ansible_pip_pkgs }}"
     state: present
@@ -48,7 +48,7 @@
     - userenv
 
 - name: Ensuring we can drop key in correct dir
-  file:
+  ansible.builtin.file:
     path: "{{ item.homedir }}/.ssh"
     state: directory
     owner: "{{ item.owner }}"
@@ -62,7 +62,7 @@
     - creds
 
 - name: Ensuring we'll unlock in agent
-  blockinfile:
+  ansible.builtin.blockinfile:
     path: "{{ item.homedir }}/.bashrc"
     block: |
       # Unlocking on first login, asking for passphrase
@@ -110,7 +110,7 @@
 
 
 - name: Ensuring ansible can log to a specific directory per inventory
-  file:
+  ansible.builtin.file:
     path: "/var/log/ansible/{{ item.name }}"
     state: directory
     owner: "{{ item.owner }}"
@@ -122,7 +122,7 @@
   when: item.log_to_disk
 
 - name: Configuring logrotate if needed
-  template:
+  ansible.builtin.template:
     src: logrotate.j2
     dest: "/etc/logrotate.d/ansible-{{ item.name }}"
   with_items: "{{ ansible_configs }}"
@@ -131,7 +131,7 @@
   when: item.log_to_disk
    
 - name: Ensuring we have a local creds store for git-crypt keys
-  file:
+  ansible.builtin.file:
     path: "{{ item.credstore }}"
     state: directory
     owner: "{{ item.owner }}"
@@ -158,7 +158,7 @@
     - creds
 
 - name: Ensuring we have correct place for all ansible files
-  file:
+  ansible.builtin.file:
     path: "{{ item.base_path }}"
     state: directory
     mode: 0750
@@ -169,7 +169,7 @@
     label: "{{ item.base_path }}"
 
 - name: Ensuring mitogen is available
-  git:
+  ansible.builtin.git:
     repo: "{{ mitogen_scm_url }}"
     dest: "{{ item.base_path }}/mitogen-{{ mitogen_tag }}"
     version: "{{ mitogen_tag }}"
@@ -183,7 +183,7 @@
     - mitogen
 
 - name: Symlinking mitogen to correct version/tag
-  file:
+  ansible.builtin.file:
     state: link
     src: "{{ item.base_path }}/mitogen-{{ mitogen_tag }}"
     path: "{{ item.base_path }}/mitogen"
@@ -195,7 +195,7 @@
     - mitogen
 
 - name: Patching mitogen if needed
-  patch:
+  ansible.posix.patch:
     src: "mitogen-patches/{{ item.1 }}"
     basedir: "{{ item.0.base_path }}/mitogen"
     strip: 1
@@ -210,7 +210,7 @@
 
 
 - name: Checking out all needed SCM repositories
-  git:
+  ansible.builtin.git:
     dest: "{{ item.0.base_path }}/{{ item.1.name }}"
     repo: "{{ item.1.url }}"
     accept_hostkey: yes
@@ -223,7 +223,7 @@
     label: "{{ item.1.name }}"
 
 - name: Unlocking git-crypted SCM repositories if needed
-  command: "git-crypt unlock {{ item.0.credstore }}/{{ item.1.git_crypt_key }}"
+  ansible.builtin.command: "git-crypt unlock {{ item.0.credstore }}/{{ item.1.git_crypt_key }}"
   args:
     chdir: "{{ item.0.base_path }}/{{ item.1.name }}"
   become: True
@@ -236,7 +236,7 @@
     label: "{{ item.1.name }}"
 
 - name: Mandatory symlinks 
-  file:
+  ansible.builtin.file:
     state: link
     src: "{{ item[0].base_path }}/playbooks/{{ item[1] }}"
     path: "{{ item[0].base_path }}/{{ item[1] }}"
@@ -247,7 +247,7 @@
     label: "{{ item[1] }}"
 
 - name: Configuring ansible.cfg 
-  template:
+  ansible.builtin.template:
     src: ansible.cfg.j2
     dest: "{{ item.base_path }}/ansible.cfg"
     owner: "{{ item.owner }}"
@@ -261,7 +261,7 @@
     - vault
 
 - name: Creating facts caching directory for ansible
-  file:
+  ansible.builtin.file:
     state: directory
     owner: "{{ item.owner }}"
     group: "{{ item.owner }}"
@@ -272,7 +272,7 @@
      label: "{{ item.name }}"         
 
 - name: Correct symlink for requirements.yml in basedir
-  file:
+  ansible.builtin.file:
     state: link
     src: "{{ item.base_path }}/playbooks/requirements-{{ item.env }}.yml"
     dest: "{{ item.base_path }}/requirements.yml"
@@ -282,7 +282,7 @@
     label: "{{ item.name }}"
 
 - name: Fetching all needed roles and collections
-  command: "/home/{{ item.owner }}/.local/bin/ansible-roles-ctl install"
+  ansible.builtin.command: "/home/{{ item.owner }}/.local/bin/ansible-roles-ctl install"
   args:
     chdir: "{{ item.base_path }}"
   become: True
@@ -292,7 +292,7 @@
     label: "{{ item.name }}"       
 
 - name: Updating all roles based on requirements.yml
-  command: "/home/{{ item.owner }}/.local/bin/ansible-roles-ctl update"
+  ansible.builtin.command: "/home/{{ item.owner }}/.local/bin/ansible-roles-ctl update"
   args:
     chdir: "{{ item.base_path }}"
   become: True
@@ -302,7 +302,7 @@
     label: "{{ item.name }}"       
 
 - name: Mandatory symlink for roles
-  file:
+  ansible.builtin.file:
     state: link
     src: "{{ item.base_path }}/roles"
     path: "{{ item.base_path }}/playbooks/roles"    
@@ -312,7 +312,7 @@
     label: "{{ item.name }}"
 
 - name: Ansible wrapper script per inventory
-  template:
+  ansible.builtin.template:
     src: tobisna-wrapper.j2
     dest: "{{ item.base_path }}/tobisna-wrapper"
     mode: 0750
@@ -325,7 +325,7 @@
     - wrapper
 
 - name: Interactive Ansible on demand script per inventory
-  template:
+  ansible.builtin.template:
     src: ansible-ara-run.j2
     dest: "{{ item.base_path }}/ansible-ara-run"
     mode: 0750
@@ -338,7 +338,7 @@
     - wrapper
   
 - name: Enabling ansible ping/refresh facts in cache
-  cron:
+  ansible.builtin.cron:
     name: "{{ item.name }} ansible facts refresh"
     minute: "{{ item.cron_refresh_minute }}"
     hour: "{{ item.cron_refresh_hour }}"
@@ -353,7 +353,7 @@
     - cron
 
 - name: Enabling ansible regular roles play
-  cron:
+  ansible.builtin.cron:
     name: "{{ item.name }} ansible roles play"
     minute: "{{ item.cron_roles_play_minute }}"
     hour: "{{ item.cron_roles_play_hour }}"
@@ -368,7 +368,7 @@
     - cron
 
 - name: ARA setup
-  include_tasks: ara.yml
+  ansible.builtin.include_tasks: ara.yml
   when: ansible_use_ara
   tags:
     - ara

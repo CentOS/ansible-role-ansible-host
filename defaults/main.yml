@@ -63,6 +63,11 @@ ansible_ssh_ServerAliveInterval: '20'
 ansible_use_ara: True
 ansible_ara_container: False
 ansible_ara_pkg: True
+# Which ara version do we want to use ? 
+# we need to declare it as rpm pkg and pip package need to match (these variables will be used for that)
+ansible_ara_version: 1.5.7                               # upstream version in pip
+ansible_ara_rpm_version: "{{ ansible_ara_version }}-1"   # should match and in rpm style
+
 
 # Which container to pull in case of ansible_ara_container: True
 # Client part is already packaged for .el8
