@@ -22,7 +22,7 @@ strategy = linear
 log_path = /var/log/ansible/{{ item.name }}/ansible.log
 {% endif %}
 # Adding some interesting stats
-callback_enabled = profile_tasks, timer
+callbacks_enabled = profile_tasks, timer
 # Switch to smart so also using cached facts
 gathering = smart
 fact_caching = jsonfile
