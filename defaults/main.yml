@@ -5,6 +5,7 @@
 # Ansible version for CentOS we want on the mgmt station
 # Worth knowing that on 8-stream, ansible-core is in distro, so repo is just used 
 # to fetch other pkgs, like ara, but not ansible-core engine itself
+ansible_repo: False
 ansible_repo_pkg: centos-release-ansible-29
 
 # By default we'll check out mitogen plugin, but we can enable it per ansible config

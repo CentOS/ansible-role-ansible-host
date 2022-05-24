@@ -11,6 +11,7 @@
   ansible.builtin.yum:
     name: "{{ ansible_repo_pkg }}"
     state: installed
+  when: ansible_repo  
   tags:
     - pkgs
 
