@@ -302,6 +302,16 @@
   loop_control:
     label: "{{ item.name }}"       
 
+- name: Ensuring roles is a directory
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item.base_path }}/roles"    
+    owner: "{{ item.owner }}"
+  with_items:
+    - "{{ ansible_configs }}"
+  loop_control:
+    label: "{{ item.name }}"
+
 - name: Mandatory symlink for roles
   ansible.builtin.file:
     state: link
