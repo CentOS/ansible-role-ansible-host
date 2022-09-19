@@ -5,7 +5,7 @@ ansible_pkgs_list:
   - python3-GitPython
   - python3-netaddr
   - patch
-  - python38-pip # needed as ansible-core is relying on py3.8 and we need some python libraries
+  - python{{ ansible_py_version | replace('.','') }}-pip 
  
 ansible_pip_pkgs:
   - ansible-roles-ctl==2.0.0

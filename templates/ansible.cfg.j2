@@ -29,9 +29,9 @@ fact_caching = jsonfile
 fact_caching_connection = .ansible_cache
 timeout = 30
 {% if ansible_use_ara %}
-callback_plugins=/home/{{ item.owner }}/.local/lib/python3.8/site-packages/ara/plugins/callback
-action_plugins=/home/{{ item.owner }}/.local/lib/python3.8/site-packages/ara/plugins/action
-lookup_plugins=/home/{{ item.owner }}/.local/lib/python3.8/site-packages/ara/plugins/lookup
+callback_plugins=/home/{{ item.owner }}/.local/lib/python{{ ansible_py_version }}/site-packages/ara/plugins/callback
+action_plugins=/home/{{ item.owner }}/.local/lib/python{{ ansible_py_version }}/site-packages/ara/plugins/action
+lookup_plugins=/home/{{ item.owner }}/.local/lib/python{{ ansible_py_version }}/site-packages/ara/plugins/lookup
 {% endif %}
 
 {% if ansible_use_ara %}

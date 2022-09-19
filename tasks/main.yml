@@ -37,7 +37,7 @@
 
 - name: Ensuring we have pip pkgs for ansible-core compat
   ansible.builtin.pip:
-    executable: pip3.8
+    executable: "pip{{ ansible_py_version }}"
     name: "{{ ansible_pip_pkgs }}"
     state: present
     extra_args: --user
