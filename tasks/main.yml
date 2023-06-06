@@ -65,6 +65,7 @@
 - name: Ensuring we'll unlock in agent
   ansible.builtin.blockinfile:
     path: "{{ item.homedir }}/.bashrc"
+    create: True
     block: |
       # Unlocking on first login, asking for passphrase
       if [ ! -S ~/.ssh/ssh_auth_sock ]; then
@@ -75,7 +76,8 @@
       export SSH_AUTH_SOCK=~/.ssh/ssh_auth_sock
       ssh-add -l > /dev/null || ssh-add
   with_items: "{{ ansible_configs }}"
-  when: item.ssh_priv_key is defined
+  when: 
+    - item.ssh_priv_key is defined
   loop_control:
     label: "{{ item.owner }}"
   tags:
@@ -94,20 +96,6 @@
     label: "{{ item.owner }}"
   tags:
     - creds
-
-- name: Distributing vault file (if defined)
-  copy:
-    content: "{{ item.vault_password }}"
-    dest: "{{ item.vault_file }}"
-    owner: "{{ item.owner }}"
-    group: "{{ item.owner }}"
-    mode: 0640
-  with_items: "{{ ansible_configs }}"  
-  when: item.vault_file is defined
-  loop_control:
-    label: "{{ item.owner }}"
-  tags:
-    - vault
 
 
 - name: Ensuring ansible can log to a specific directory per inventory
@@ -168,6 +156,20 @@
   with_items: "{{ ansible_configs }}"
   loop_control:
     label: "{{ item.base_path }}"
+
+- name: Distributing vault file (if defined)
+  copy:
+    content: "{{ item.vault_password }}"
+    dest: "{{ item.vault_file }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.owner }}"
+    mode: 0640
+  with_items: "{{ ansible_configs }}"  
+  when: item.vault_file is defined
+  loop_control:
+    label: "{{ item.owner }}"
+  tags:
+    - vault
 
 - name: Ensuring mitogen is available
   ansible.builtin.git:
@@ -283,7 +285,8 @@
     label: "{{ item.name }}"
 
 - name: Fetching all needed roles and collections
-  ansible.builtin.command: "/home/{{ item.owner }}/.local/bin/ansible-roles-ctl install"
+  ansible.builtin.command: 
+    cmd: "$HOME/.local/bin/ansible-roles-ctl install"
   args:
     chdir: "{{ item.base_path }}"
   become: True
@@ -293,7 +296,8 @@
     label: "{{ item.name }}"       
 
 - name: Updating all roles based on requirements.yml
-  ansible.builtin.command: "/home/{{ item.owner }}/.local/bin/ansible-roles-ctl update"
+  ansible.builtin.command: 
+    cmd: "$HOME/.local/bin/ansible-roles-ctl update"
   args:
     chdir: "{{ item.base_path }}"
   become: True

@@ -1,0 +1,20 @@
+ansible_pkgs_list:
+  - ansible-core
+  - git
+  - python3-netaddr
+  - patch
+  - python{{ ansible_py_version }}-pip 
+ 
+ansible_pip_pkgs:
+  - GitPython
+  - ansible-roles-ctl==2.0.0
+  - ara=={{ ansible_ara_version }}
+  - netaddr==0.8.0
+  - jmespath==1.0.0
+  - boto3==1.22.12
+
+ansible_ara_pkgs:
+  - ara-{{ ansible_ara_rpm_version }}.el9
+  - python3-ara-server-{{ ansible_ara_rpm_version }}.el9
+  - python3-gunicorn
+
