@@ -20,7 +20,6 @@
         name: 
           - podman
           - git
-          - ara-{{ ansible_ara_version }}
         state: installed
 
     - name: Pulling container if needed

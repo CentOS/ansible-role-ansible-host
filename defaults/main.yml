@@ -3,22 +3,16 @@
 # We'll define multiple paths where to checkout and which keys to use
 #
 
-# Ansible version for CentOS we want on the mgmt station
-# Worth knowing that on 8-stream, ansible-core is in distro, so repo is just used 
-# to fetch other pkgs, like ara, but not ansible-core engine itself
-ansible_repo: False
-ansible_repo_pkg: centos-release-ansible-29
-
+# important : see ansible_py_version vars/* files for distro/release
 # This will be used to know which python-pip pkg to use
 # and also pip dependencies for correct interpreter
 # see https://docs.ansible.com/ansible-core/devel/installation_guide/intro_installation.html#node-requirement-summary for matching table
 # example: ansible-core-2.13, rpm pkg, requires 3.9 (so not matching upstream, be prepared)
-# Default to 3.8 and ansible-core 2.12 also because of https://github.com/mitogen-hq/mitogen/issues/966
-ansible_py_version: 3.8
+
 
 # By default we'll check out mitogen plugin, but we can enable it per ansible config
 mitogen_scm_url: https://github.com/mitogen-hq/mitogen.git
-mitogen_tag: v0.3.3
+mitogen_tag: v0.3.6
 
 # Do we need to patch mitogen (patches before new release)
 mitogen_needs_patches: False
@@ -69,18 +63,19 @@ ansible_ssh_ServerAliveInterval: '20'
 # Reporting
 # Do we want ARA installed locally
 # If so do we want container version or rpm version for ara-api server
-ansible_use_ara: True
-ansible_ara_container: False
-ansible_ara_pkg: True
+ansible_use_ara: False
+ansible_ara_container: True
+# worth knowing we *used* to have ara rpm packages but not in epel8/9 and so better to use container for ara api service now
+ansible_ara_pkg: False
+
 # Which ara version do we want to use ? 
 # we need to declare it as rpm pkg and pip package need to match (these variables will be used for that)
-ansible_ara_version: 1.5.7                               # upstream version in pip
+ansible_ara_version: 1.7.1                               # upstream version in pip
 ansible_ara_rpm_version: "{{ ansible_ara_version }}-1"   # should match and in rpm style
 
 
 # Which container to pull in case of ansible_ara_container: True
-# Client part is already packaged for .el8
-ansible_ara_container_image: 'quay.io/recordsansible/ara-api:centos8-pypi-latest'
+ansible_ara_container_image: 'quay.io/recordsansible/ara-api:centos9-pypi-latest'
 
 # common settings for ara/gunicorn
 ansible_ara_server_port: 8000

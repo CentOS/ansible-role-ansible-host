@@ -4,18 +4,21 @@ ansible_pkgs_list:
   - python3-netaddr
   - patch
   - python{{ ansible_py_version }}-pip 
- 
+  - git-crypt
+
+# We have to know which python version ansible-core will be built against/used with
+# see https://www.redhat.com/en/blog/updates-using-ansible-core-in-rhel
+ansible_py_version: 3.9
+
 ansible_pip_pkgs:
   - GitPython
   - ansible-roles-ctl==2.0.0
-  - ara=={{ ansible_ara_version }}
+  - ara[server]=={{ ansible_ara_version }}
   - netaddr==0.8.0
   - jmespath==1.0.0
   - boto3==1.22.12
   - passlib
 
 ansible_ara_pkgs:
-  - ara-{{ ansible_ara_rpm_version }}.el9
-  - python3-ara-server-{{ ansible_ara_rpm_version }}.el9
   - python3-gunicorn
 

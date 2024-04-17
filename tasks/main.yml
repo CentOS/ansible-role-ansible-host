@@ -6,14 +6,7 @@
     - "{{ ansible_distribution }}.yml"
   tags:
     - vars
-
-- name: Installing required repositories 
-  ansible.builtin.yum:
-    name: "{{ ansible_repo_pkg }}"
-    state: installed
-  when: ansible_repo  
-  tags:
-    - pkgs
+    - always
 
 - name: Ensuring some pkgs are installed
   ansible.builtin.yum: 

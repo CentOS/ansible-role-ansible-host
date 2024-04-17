@@ -6,7 +6,11 @@ ansible_pkgs_list:
   - python3-netaddr
   - patch
   - python{{ ansible_py_version | replace('.','') }}-pip 
- 
+
+# We have to know which python version ansible-core will be built against/used with
+# see https://www.redhat.com/en/blog/updates-using-ansible-core-in-rhel
+ansible_py_version: 3.11
+
 ansible_pip_pkgs:
   - ansible-roles-ctl==2.0.0
   - ara=={{ ansible_ara_version }}
