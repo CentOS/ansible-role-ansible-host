@@ -1,0 +1,26 @@
+From bc4fb9dfd9e5afc7bad2baa51fa53eb31e6bd623 Mon Sep 17 00:00:00 2001
+From: Luca Berruti <nadirio@gmail.com>
+Date: Wed, 8 Feb 2023 14:05:25 +0100
+Subject: [PATCH] Fix: filedescriptor out of range in select()
+
+---
+ ansible_mitogen/process.py | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/ansible_mitogen/process.py b/ansible_mitogen/process.py
+index 63caa88a9..8c19c37a3 100644
+--- a/ansible_mitogen/process.py
++++ b/ansible_mitogen/process.py
+@@ -285,8 +285,10 @@ class Broker(mitogen.master.Broker):
+     the exuberant syscall expense of EpollPoller, so override it and restore
+     the poll() poller.
+     """
+-    poller_class = mitogen.core.Poller
+-
++    if mitogen.parent.PollPoller.SUPPORTED:
++        poller_class = mitogen.parent.PollPoller
++    else:
++        poller_class = mitogen.core.Poller
+ 
+ class Binding(object):
+     """
