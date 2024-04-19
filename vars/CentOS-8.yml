@@ -5,7 +5,7 @@ ansible_pkgs_list:
   - python3-GitPython
   - python3-netaddr
   - patch
-  - python{{ ansible_py_version | replace('.','') }}-pip 
+  - python{{ ansible_py_version }}-pip 
 
 # We have to know which python version ansible-core will be built against/used with
 # see https://www.redhat.com/en/blog/updates-using-ansible-core-in-rhel
