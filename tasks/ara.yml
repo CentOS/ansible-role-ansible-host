@@ -68,7 +68,7 @@
         user: ara
         hour: '*/2'
         minute: '59'
-        job: "podman exec -ti --tty ara-api-server  ara playbook prune --days {{ ansible_ara_prune_days }} --limit {{ ansible_ara_prune_limit }} --confirm  >/dev/null"
+        job: "podman exec -ti --tty ara-api-server  ara playbook prune --days {{ ansible_ara_prune_days }} --limit {{ ansible_ara_prune_limit }} --confirm  >/dev/null ; echo 'vacuum ;' | sqlite3 /var/lib/ara/ansible.sqlite"
   when: ansible_ara_container
   tags:
     - ara
@@ -138,8 +138,8 @@
         user: ara
         hour: '*/2'
         minute: '59'
-        job: "ara playbook prune --days {{ ansible_ara_prune_days }} --limit {{ ansible_ara_prune_limit }} --confirm  >/dev/null"
-
+        job: "ara playbook prune --days {{ ansible_ara_prune_days }} --limit {{ ansible_ara_prune_limit }} --confirm  >/dev/null ; echo 'vacuum ;' | sqlite3 /var/lib/ara/ansible.sqlite"
+   
   when: ansible_ara_pkg
   tags:
     - ara
