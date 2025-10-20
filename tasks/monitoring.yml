@@ -1,0 +1,38 @@
+- block:
+  - name: Configuring agent in Zabbix server
+    include_role:
+      name: zabbix-server
+      tasks_from: agent_config
+    vars:
+      zabbix_templates: "{{ gitlab_token_zabbix_templates }}"
+      zabbix_groups: "{{ gitlab_token_zabbix_groups }}"
+    tags:
+    - monitoring
+  delegate_to: "{{ zabbix_api_srv }}"
+  when: zabbix_api_srv is defined
+
+- name: Extract SCM GitLab Tokens to Zabbix LLD script
+  ansible.builtin.template:
+    src: gitlab-tokens-lld.sh.j2
+    dest: /usr/lib/zabbix/zabbix-gitlab-tokens-lld.sh
+    mode: '0750'
+    owner: root
+
+- name: Create cronjob to send LLD tokens to zabbix
+  cron:
+    name: "GitLab Tokens Low-Level Discovery"
+    job: /usr/lib/zabbix/zabbix-gitlab-tokens-lld.sh
+    minute: "*/10"
+    user: root
+
+- name: Extract SCM GitLab Tokens to Zabbix check script
+  ansible.builtin.template:
+    src: gitlab-tokens-check.sh.j2
+    dest: /usr/lib/zabbix/zabbix-gitlab-tokens-check.sh
+    mode: '0750'
+
+- name: Create cronjob to run token checks and send to Zabbix
+  cron:
+    name: "GitLab Tokens Expiry Monitoring"
+    job: /usr/lib/zabbix/zabbix-gitlab-tokens-check.sh
+    minute: "*/5"

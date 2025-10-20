@@ -380,3 +380,8 @@
   when: ansible_use_ara
   tags:
     - ara
+
+- name: Monitor GitLab Tokens
+  ansible.builtin.include_tasks: monitoring.yml
+  tags:
+    - monitoring
