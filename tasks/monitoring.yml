@@ -22,7 +22,8 @@
   cron:
     name: "GitLab Tokens Low-Level Discovery"
     job: /usr/lib/zabbix/zabbix-gitlab-tokens-lld.sh
-    minute: "*/10"
+    minute: "0"
+    hour: "0"
     user: root
 
 - name: Extract SCM GitLab Tokens to Zabbix check script
@@ -35,4 +36,5 @@
   cron:
     name: "GitLab Tokens Expiry Monitoring"
     job: /usr/lib/zabbix/zabbix-gitlab-tokens-check.sh
-    minute: "*/5"
+    minute: "0"
+    hour: "1"
