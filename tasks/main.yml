@@ -15,6 +15,9 @@
   tags:
     - pkgs
 
+- name: Creating shared group for ansible users logging to disk
+  ansible.builtin.group:
+    name: ansibot
 
 - name: Creating the ansible inventory owner
   ansible.builtin.user:
@@ -22,6 +25,8 @@
     name: "{{ item.owner }}"
     state: present
     home: "{{ item.homedir }}"
+    append: True
+    groups: ansibot
   with_items: "{{ ansible_configs }}"
   loop_control:
     label: "{{ item.owner }}"
@@ -96,12 +101,14 @@
     path: "/var/log/ansible/{{ item.name }}"
     state: directory
     owner: "{{ item.owner }}"
-    group: "{{ item.owner }}"
+    group: "ansibot"
     mode: '2770'
   with_items: "{{ ansible_configs }}"
   loop_control:
     label: "{{ item.owner }}"
   when: item.log_to_disk
+  tags:
+    - logs
 
 - name: Configuring logrotate if needed
   ansible.builtin.template:
