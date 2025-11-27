@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# This script will create LLD entries in Zabbix for any
+# GitLab tokens defined in host_vars/ansible_configs/scm_repos
+# Called by: cron
+# Managed by: Ansible (don't edit)
+
+{% set seen = [] %}
+{% set items = [] %}
+{% for config in ansible_configs %}
+  {% for repo in config.scm_repos %}
+    {% set token = repo.url | regex_search('glpat-[^@]+') %}
+    {% if token and token not in seen %}
+      {% set _ = seen.append(token) %}
+      {% set _ = items.append({'config': config.name, 'repo': repo.name, 'token': token}) %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+PATH=$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+
+# some variables
+lld_file="/etc/zabbix/gitlab_tokens.lld"
+
+# Initialize lld file
+echo -en '- gitlab.lld.tokens { "data": [' > ${lld_file}
+
+# Parsing $items and adding to json
+{% for item in items %}
+echo -en '    { "{{ '{#TOKEN}' }}": "token-{{ item.config }}-{{ item.repo }}"},' >> ${lld_file}
+{% endfor %}
+
+# Removing last comma for json
+sed -i '$ s/,$//' ${lld_file}
+# Closing file
+echo -e '  ] }'>> ${lld_file}
+
+# Reporting tokens to Zabbix
+zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -i ${lld_file} >/dev/null

@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+# This script will query the GitLab API for expiry status of
+# any GitLab tokens defined in host_vars/ansible_configs/scm_repos
+# for each token it will then report the expiry time in days
+# Called by: cron
+# Managed by: Ansible (don't edit)
+
+{% set seen = [] %}
+{% set items = [] %}
+{% for config in ansible_configs %}
+  {% for repo in config.scm_repos %}
+    {% set token = repo.url | regex_search('glpat-[^@]+') %}
+    {% if token and token not in seen %}
+      {% set _ = seen.append(token) %}
+      {% set _ = items.append({'config': config.name, 'repo': repo.name, 'token': token}) %}
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+PATH=$PATH:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+
+# Get current time in epoch seconds
+current_epoch=$(date +%s)
+
+# Loop over tokens:
+
+{% for item in items %}
+
+# token-{{ item.config }}-{{ item.repo }}
+
+expiry=$(curl --request GET --header "PRIVATE-TOKEN: {{ item.token }}" --url "https://gitlab.com/api/v4/personal_access_tokens/self" 2>/dev/null|jq -r ".expires_at")
+expiry_epoch=$(date -d "$expiry" +%s)
+
+# Calculate days left
+days_left=$(( (expiry_epoch - current_epoch) / 86400 ))
+
+# Zabbix will interpret negatives as strings :/
+if [[ $days_left -lt 0 ]] ; then
+  days_left=0
+fi
+
+zabbix_sender -c /etc/zabbix/zabbix_agentd.conf -k gitlab.expiry.[token-{{ item.config }}-{{ item.repo }}] -o $days_left >/dev/null
+
+{% endfor %}

@@ -85,3 +85,9 @@ ansible_ara_workers: 4
 ansible_ara_prune_days: 7
 # Number of ara records to process per call
 ansible_ara_prune_limit: 2000
+
+# Zabbix/monitoring part
+gitlab_token_zabbix_templates:
+  - Template GitLab Tokens
+gitlab_token_zabbix_groups:
+  - CentOS GitLab Tokens
