@@ -70,7 +70,7 @@ ansible_ara_pkg: False
 
 # Which ara version do we want to use ? 
 # we need to declare it as rpm pkg and pip package need to match (these variables will be used for that)
-ansible_ara_version: 1.7.1                               # upstream version in pip
+ansible_ara_version: 1.7.3                               # upstream version in pip
 ansible_ara_rpm_version: "{{ ansible_ara_version }}-1"   # should match and in rpm style
 
 
